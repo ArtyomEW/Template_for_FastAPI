@@ -1,7 +1,10 @@
-from typing import List
+from datetime import datetime
+from enum import Enum
+from typing import List, Optional
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
+
 
 app = FastAPI(title='Trading app')
 
@@ -11,7 +14,10 @@ fake_trades = [
     {'id':1, 'user_id':1, 'currency': 'BTC', 'side': 'buy', 'price': 123, 'amount': 2.12},
     {'id':2, 'user_id':1, 'currency': 'BTC', 'side': 'sell', 'price': 321, 'amount': 4.15}]
 
-users =[{'id': 1, 'role': 'null', 'name': 'Artyom'}]
+users =[{'id': 1, 'role': 'null', 'name': 'Artyom', 'degree':
+    [{'id': 1, 'created_at': datetime.now(), 'type_degree': 'newbie'}]
+         }]
+
 
 class Trade(BaseModel):
     id: int
@@ -22,10 +28,23 @@ class Trade(BaseModel):
     amount: float = Field(ge=0)
 
 
+class Type(Enum):
+    newbie = 'newbie'
+    expert = 'expert'
+
+
+class Degree(BaseModel):
+    id: int = Field(ge=0)
+    created_at: datetime #тип данных строго этому формату
+    type_degree: Type
+
+
 class User(BaseModel):
-    id: int
+    id: int = Field(ge=0)
     role: str
-    name: str
+    name: str = Field(max_length=20)
+    degree: Optional[List[Degree]] = [] #Валидация degreee с помощью Optional.
+    # Либо функция передаёт или нет данные, то всё равно валидация будет пройдена
 
 
 @app.get('/', response_model=List[User])
