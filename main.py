@@ -62,3 +62,8 @@ def add_trades(trades: List[Trade]):
 
 
 
+
+
+
+
+
