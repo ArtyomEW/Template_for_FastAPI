@@ -1,69 +1,41 @@
-from datetime import datetime
-from enum import Enum
-from typing import List, Optional
-
-from fastapi import FastAPI
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, Depends
+from fastapi_users import FastAPIUsers
+from auth.cookie import auth_backend
+from auth.database import User
+from auth.manager import get_user_manager
+from auth.schema import UserRead, UserCreate
 
 
 app = FastAPI(title='Trading app')
 
 
-
-fake_trades = [
-    {'id':1, 'user_id':1, 'currency': 'BTC', 'side': 'buy', 'price': 123, 'amount': 2.12},
-    {'id':2, 'user_id':1, 'currency': 'BTC', 'side': 'sell', 'price': 321, 'amount': 4.15}]
-
-users =[{'id': 1, 'role': 'null', 'name': 'Artyom', 'degree':
-    [{'id': 1, 'created_at': datetime.now(), 'type_degree': 'newbie'}]
-         }]
+fastapi_users = FastAPIUsers[User, int](
+    get_user_manager,
+    [auth_backend],)
 
 
-class Trade(BaseModel):
-    id: int
-    user_id: int = Field(ge=0) #id должен быть больше либо равно нулю
-    currency: str = Field(max_length=4) #название криптовалюты должно быть не больше 4-ёх букв
-    side: str = Field(max_length=3) #название криптовалюты должно быть не больше 4-ёх букв
-    price: int = Field(ge=0)  # Цена должна быть больше ли равно нули
-    amount: float = Field(ge=0)
+#Роутер Авторизация
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth_users",
+    tags=["auth"],)
 
 
-class Type(Enum):
-    newbie = 'newbie'
-    expert = 'expert'
+#Роутер Регистрация
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/register_user",
+    tags=["auth"],
+)
 
 
-class Degree(BaseModel):
-    id: int = Field(ge=0)
-    created_at: datetime #тип данных строго этому формату
-    type_degree: Type
+current_user = fastapi_users.current_user()
 
+@app.get("/protected-route")
+def protected_route(user: User = Depends(current_user)):
+    return f"Hello, {user.username}"
 
-class User(BaseModel):
-    id: int = Field(ge=0)
-    role: str
-    name: str = Field(max_length=20)
-    degree: Optional[List[Degree]] = [] #Валидация degreee с помощью Optional.
-    # Либо функция передаёт или нет данные, то всё равно валидация будет пройдена
-
-
-@app.get('/', response_model=List[User])
-def get_data(id: int):
-    return list(filter(lambda user: user.get('id') == id, users))
-
-
-@app.post('/add_trades')
-def add_trades(trades: List[Trade]):
-    fake_trades.extend(trades)
-    return {'status': 200,
-            'data': fake_trades}
-
-
-
-
-
-
-
-
-
+@app.get("/unprotected-route")
+def protected_route():
+    return f"Hello, anonym"
 
