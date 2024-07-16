@@ -7,26 +7,12 @@ from auth.base_config import fastapi_users
 from redis import asyncio as aioredis
 from fastapi_cache import FastAPICache
 from operations.router import router as router_operation
+from chat.router import router as router_websocket
 from tasks.router import router as router_tasks
 from fastapi.middleware.cors import CORSMiddleware
+from pages.router import router as router_page
 
 app = FastAPI(title='Trading app')
-
-origins = [
-    "http://localhost.tiangolo.com",
-    "https://localhost.tiangolo.com",
-    "http://localhost",
-    "http://localhost:8080",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=['GET', 'POST', 'OPTIONS', 'DELETE', 'PATCH', 'PUT'],
-    allow_headers=["Content-Type", "Set-Cookie", "Access-Control-Allow-Headers", "Access-Control-Allow-Origin",
-                   "Authorization"],
-)
 
 # Роутер Авторизация
 app.include_router(
@@ -43,6 +29,20 @@ app.include_router(
 
 app.include_router(router_operation)
 app.include_router(router_tasks)
+app.include_router(router_page)
+app.include_router(router_websocket)
+
+origins = ["*"
+           ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=['GET', 'POST', 'OPTIONS', 'DELETE', 'PATCH', 'PUT'],
+    allow_headers=["Content-Type", "Set-Cookie", "Access-Control-Allow-Headers", "Access-Control-Allow-Origin",
+                   "Authorization"],
+)
 
 
 @app.on_event('startup')

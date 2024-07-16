@@ -12,6 +12,7 @@ from alembic import context
 from src.config import DB_HOST, DB_PORT, DB_USER, DB_NAME, DB_PASS
 from src.models.model import Base as auth_model
 from src.operations.model_operatiom import Operation as operation_model
+from src.chat.models import Message as message_model
 
 sys.path.append(os.path.join(sys.path[0], 'src'))
 # this is the Alembic Config object, which provides
@@ -36,7 +37,8 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = [auth_model.metadata,
-                   operation_model.metadata]
+                   operation_model.metadata,
+                   message_model.metadata]
 
 
 # other values from the config, defined by the needs of env.py,

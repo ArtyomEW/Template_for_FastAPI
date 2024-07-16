@@ -1,5 +1,4 @@
 from time import sleep
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_async_session
@@ -8,19 +7,27 @@ from .model_operatiom import Operation
 from .schema import OperationAdd
 from fastapi_cache.decorator import cache
 
+
 router = APIRouter(prefix='/Operations',
                    tags=['Operations'])
 
 
-@router.get('/read_opeariton')
-@cache(expire=10)
-async def read_operation(session: AsyncSession = Depends(get_async_session)):
-    sleep(3)
-    query = select(Operation)
-    result = await session.execute(query)
-    return {'status': 200,
-            'data': result.mappings().all(),
-            'detail': None}
+@router.get('/read_operation')
+async def read_operation(operation_type: str,
+                         session: AsyncSession = Depends(get_async_session)
+                         ):
+    try:
+        query = select(Operation).where(Operation.type == operation_type)
+        result = await session.execute(query)
+        return {'status': 200,
+                'data': result.mappings().all(),
+                'detail': None}
+    except Exception:
+        raise HTTPException(status_code=500, detail={
+            'status': 'error',
+            'data': None,
+            'detail': None,
+        })
 
 
 @router.post('/add_operation')
@@ -34,6 +41,7 @@ async def add_operation(schema: OperationAdd, session: AsyncSession = Depends(ge
                 'detail': 'Вы успешно добавили операции'}
     except Exception:
         raise HTTPException(status_code=500, detail={
+            'status': 'error',
             'data': None,
             'detail': 'Что то пошло не так. Возможно вы не указали все данные для всех полей'
         })
@@ -50,6 +58,7 @@ async def update_operation(schema: OperationAdd, session: AsyncSession = Depends
                 'detail': 'Успешно вы обновили данные под вашим идентификатором'}
     except Exception:
         raise HTTPException(status_code=500, detail={
+            'status': 'error',
             'data': None,
             'detail': 'Вы возможно не правильно указали идентификатор'
         })
@@ -66,7 +75,7 @@ async def delete_operation(id_operation: int, session: AsyncSession = Depends(ge
                 'detail': 'Успешно вы удалили данные под вашим идентификатором'}
     except Exception:
         raise HTTPException(status_code=500, detail={
+            'status': 'error',
             'data': None,
             'detail': 'Возможно вы указали не правильный идентификатор'
         })
-

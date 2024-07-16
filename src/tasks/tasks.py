@@ -6,6 +6,7 @@ from config import GMAIL_PASSWORD, SMTP_USER
 SMTP_HOST = 'smtp.gmail.com'
 SMTP_PORT = 465
 
+
 celery = Celery('tasks', broker='redis://localhost:6379')
 
 
